@@ -168,7 +168,7 @@ describe('spaced repetition', () => {
 
 describe('stages', () => {
   it('starts with five players and grows', () => {
-    expect(stagePool(SEED_PLAYERS, 1).map((p) => p.id)).toEqual(['yarden-shua', 'miguel-silva', 'shon-weissman', 'omer-atzili', 'eugene-ansah'])
+    expect(stagePool(SEED_PLAYERS, 1).map((p) => p.id)).toEqual(['yarden-shua', 'miguel-silva', 'shon-weissman', 'omer-atzili', 'adi-yona'])
     expect(stagePool(SEED_PLAYERS, 2)).toHaveLength(10)
     expect(stagePool(SEED_PLAYERS, 4)).toHaveLength(active.length)
     expect(resolvePool(SEED_PLAYERS, 'custom', 1, [])).toHaveLength(5)

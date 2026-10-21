@@ -12,8 +12,10 @@ export const stt = new WebSpeechSTT()
 interface CaptionState {
   text: string
   speaking: boolean
+  /** The speech engine didn't start talking last time (muted device, speech not unlocked, no voice). */
+  silent: boolean
 }
-export const captionStore = createStore<CaptionState>({ text: '', speaking: false })
+export const captionStore = createStore<CaptionState>({ text: '', speaking: false, silent: false })
 export const useCaption = () => useStore(captionStore)
 
 const NIQQUD = /[֑-ֽֿ-ׇ]/g
@@ -21,6 +23,8 @@ const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
 let token = 0
 let lastLines: Line[] = []
+/** Lines in a row the engine accepted but never started speaking. */
+let silentStreak = 0
 
 function toLines(input: string | Line | Line[]): Line[] {
   if (typeof input === 'string') return [{ say: input }]
@@ -39,10 +43,16 @@ export async function say(input: string | Line | Line[], { remember = true } = {
   if (remember) lastLines = lines
   for (const line of lines) {
     if (mine !== token) return
-    captionStore.set({ text: line.show ?? line.say.replace(NIQQUD, ''), speaking: true })
+    captionStore.set((c) => ({ ...c, text: line.show ?? line.say.replace(NIQQUD, ''), speaking: true }))
     const s = settingsStore.get()
     if (s.narrationMuted || !tts.isSupported()) await wait(700 + line.say.length * 45)
-    else await tts.speak(line.say, { rate: s.rate, pitch: s.pitch, voiceURI: s.voiceURI })
+    else {
+      const started = await tts.speak(line.say, { rate: s.rate, pitch: s.pitch, voiceURI: s.voiceURI })
+      if (mine === token) {
+        silentStreak = started ? 0 : silentStreak + 1
+        captionStore.set((c) => ({ ...c, silent: silentStreak >= 2 }))
+      }
+    }
   }
   if (mine === token) captionStore.set((c) => ({ ...c, speaking: false }))
 }
@@ -56,11 +66,7 @@ export function stopAll() {
   token++
   tts.cancel()
   stt.abort()
-  captionStore.set({ text: '', speaking: false })
-}
-
-export function clearCaption() {
-  captionStore.set({ text: '', speaking: false })
+  captionStore.set((c) => ({ ...c, text: '', speaking: false }))
 }
 
 /** Stops talking (e.g. before opening the microphone) but keeps the caption. */

@@ -103,7 +103,11 @@ export function Home({ go }: { go: (r: Route) => void }) {
             <div className="h-full rounded-full bg-beitar transition-all" style={{ width: `${active.length ? (100 * learned) / active.length : 0}%` }} />
           </div>
         </div>
-        {withPhotos === 0 && <p className="mt-2 text-center text-xs text-white/50">💡 להורים: אפשר להוסיף תמונות שחקנים במסך ההורים 🔒</p>}
+        {withPhotos < active.length && (
+          <button type="button" onClick={() => go('parent')} className="mt-2 w-full text-center text-xs text-white/60 underline">
+            📷 להורים: הוסיפו תמונות שחקנים ({withPhotos}/{active.length})
+          </button>
+        )}
       </footer>
     </div>
   )

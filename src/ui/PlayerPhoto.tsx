@@ -52,8 +52,8 @@ interface PhotoProps {
 
 export function PlayerPhoto({ player, imageIndex = 0, showNumber = true, showName = false, className = '', onClick }: PhotoProps) {
   const photos = playablePhotos(player)
-  const ref = photos.length ? photos[imageIndex % photos.length] : null
-  const src = useImageUrl(ref)
+  const photo = photos.length ? photos[imageIndex % photos.length] : null
+  const src = useImageUrl(photo?.url)
   const [failed, setFailed] = useState(false)
   useEffect(() => setFailed(false), [src])
 
@@ -63,7 +63,18 @@ export function PlayerPhoto({ player, imageIndex = 0, showNumber = true, showNam
       className={`relative overflow-hidden rounded-[1.75rem] bg-linear-to-b from-[#2e2e2e] to-[#141414] ring-4 ring-beitar shadow-[0_0_40px_rgba(247,203,35,0.22)] ${className}`}
     >
       {src && !failed ? (
-        <img src={src} alt={player.fullName} draggable={false} onError={() => setFailed(true)} className="h-full w-full object-cover object-top" />
+        <img
+          src={src}
+          alt={player.fullName}
+          draggable={false}
+          onError={() => setFailed(true)}
+          style={{
+            objectPosition: photo?.objectPosition ?? '50% 15%',
+            transform: photo?.zoom ? `scale(${photo.zoom})` : undefined,
+            transformOrigin: photo?.objectPosition,
+          }}
+          className="h-full w-full object-cover"
+        />
       ) : (
         <div className="flex h-full w-full items-center justify-center p-[9%]">
           <JerseyArt number={showNumber ? player.jerseyNumber : null} name={showName ? player.lastName : undefined} className="h-full w-full drop-shadow-[0_8px_18px_rgba(0,0,0,0.5)]" />

@@ -34,6 +34,18 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,svg,png,woff,woff2}'],
+          // Openly licensed player photos are loaded from Wikimedia Commons; keep them for offline play.
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/upload\.wikimedia\.org\//,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'player-photos',
+                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 90 },
+                cacheableResponse: { statuses: [0, 200] },
+              },
+            },
+          ],
         },
       }),
     ],

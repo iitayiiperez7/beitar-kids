@@ -7,6 +7,9 @@ import type { ListenResult, SpeakOptions, STTProvider, TTSProvider } from './typ
 
 export class WebSpeechTTS implements TTSProvider {
   private voices: SpeechSynthesisVoice[] = []
+  /** Holding a reference keeps Chrome from garbage-collecting it and losing `end`. */
+  private current: SpeechSynthesisUtterance | null = null
+  private lastCancel = 0
 
   constructor() {
     if (!this.isSupported()) return
@@ -34,9 +37,9 @@ export class WebSpeechTTS implements TTSProvider {
     )
   }
 
-  speak(text: string, opts: SpeakOptions): Promise<void> {
+  speak(text: string, opts: SpeakOptions): Promise<boolean> {
     return new Promise((resolve) => {
-      if (!this.isSupported()) return resolve()
+      if (!this.isSupported()) return resolve(false)
       const synth = window.speechSynthesis
       const u = new SpeechSynthesisUtterance(text)
       u.lang = 'he-IL'
@@ -44,24 +47,41 @@ export class WebSpeechTTS implements TTSProvider {
       if (voice) u.voice = voice
       u.rate = opts.rate
       u.pitch = opts.pitch
+      this.current = u
+      let started = false
       let done = false
       // Some engines never fire `end`; don't let the game hang on them.
       const fallback = window.setTimeout(() => finish(), 2500 + (text.length * 120) / opts.rate)
-      function finish() {
+      const finish = () => {
         if (done) return
         done = true
         window.clearTimeout(fallback)
-        resolve()
+        if (this.current === u) this.current = null
+        resolve(started)
       }
+      u.onstart = () => (started = true)
       u.onend = finish
       u.onerror = finish
-      synth.speak(u)
-      if (synth.paused) synth.resume()
+      // Safari silently drops an utterance queued right after cancel(), so wait a moment.
+      // With nothing cancelled (e.g. the very first tap) it speaks immediately, inside the gesture.
+      const sinceCancel = Date.now() - this.lastCancel
+      const start = () => {
+        if (done) return
+        synth.speak(u)
+        if (synth.paused) synth.resume()
+      }
+      if (sinceCancel < 200) window.setTimeout(start, 200 - sinceCancel)
+      else start()
     })
   }
 
   cancel(): void {
-    if (this.isSupported()) window.speechSynthesis.cancel()
+    if (!this.isSupported()) return
+    const synth = window.speechSynthesis
+    if (synth.speaking || synth.pending) {
+      synth.cancel()
+      this.lastCancel = Date.now()
+    }
   }
 }
 

@@ -3,6 +3,7 @@
 // recognition) or by tapping one of three options.
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { playablePhotos } from '../data/names'
 import type { Player } from '../data/types'
 import { matchNameAnswer, matchNumberAnswer, type VoiceVerdict } from '../engine/matching'
 import { numberToHebrew } from '../engine/hebrewNumbers'
@@ -59,6 +60,8 @@ export function Quiz({ mode, onHome }: { mode: QuizMode; onHome: () => void }) {
   const voiceOn = settings.sttEnabled && stt.isSupported() && !micBlocked
 
   const [q, setQ] = useState<Question | null>(null)
+  /** Which of the player's photos to show, so the child learns the face and not one picture. */
+  const [photoIndex, setPhotoIndex] = useState(0)
   const [step, setStep] = useState(0)
   const [eliminated, setEliminated] = useState<Set<string>>(new Set())
   const [hint, setHint] = useState(false)
@@ -89,6 +92,7 @@ export function Quiz({ mode, onHome }: { mode: QuizMode; onHome: () => void }) {
 
     live.current = { ...live.current, seq: live.current.seq + 1, mistakes: 0, voiceFails: 0, hint: false, solved: false }
     setQ(question)
+    setPhotoIndex(Math.floor(Math.random() * Math.max(1, playablePhotos(player).length)))
     setStep(index)
     setEliminated(new Set())
     setHint(false)
@@ -242,7 +246,7 @@ export function Quiz({ mode, onHome }: { mode: QuizMode; onHome: () => void }) {
       ) : (
         <>
           <section className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">
-            <QuestionVisual q={q} />
+            <QuestionVisual q={q} photoIndex={photoIndex} />
           </section>
 
           <Caption />
@@ -273,7 +277,7 @@ export function Quiz({ mode, onHome }: { mode: QuizMode; onHome: () => void }) {
   )
 }
 
-function QuestionVisual({ q }: { q: Question }) {
+function QuestionVisual({ q, photoIndex }: { q: Question; photoIndex: number }) {
   const p = q.player
   if (q.kind === 'whoHasNumber') {
     return (
@@ -287,7 +291,7 @@ function QuestionVisual({ q }: { q: Question }) {
   return (
     <>
       <Fit>
-        <PlayerPhoto key={p.id} player={p} showNumber={q.kind !== 'numberOf'} className="h-full w-full animate-pop" />
+        <PlayerPhoto key={p.id} player={p} imageIndex={photoIndex} showNumber={q.kind !== 'numberOf'} className="h-full w-full animate-pop" />
       </Fit>
       {q.kind === 'numberOf' && (
         <button type="button" onClick={() => say(q.prompt)} className="text-3xl font-black">

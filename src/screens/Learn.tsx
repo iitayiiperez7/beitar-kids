@@ -106,6 +106,11 @@ export function Learn({ onHome }: { onHome: () => void }) {
           </div>
         )}
 
+        {photos[photo % photos.length]?.license && (
+          <div className="-mt-2 text-[10px] text-white/40" dir="ltr">
+            📷 {photos[photo % photos.length].source} · {photos[photo % photos.length].license}
+          </div>
+        )}
         <button type="button" onClick={() => say({ say: spokenFull(player), show: player.fullName })} className="animate-fade-up text-4xl font-black leading-tight active:scale-95">
           {player.fullName}
         </button>

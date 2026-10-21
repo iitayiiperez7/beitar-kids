@@ -58,18 +58,25 @@ export function TopBar({ title, onHome, step, total, points }: { title: string; 
 
 /** Subtitles for everything the narrator says; tap to hear it again. */
 export function Caption() {
-  const { text, speaking } = useCaption()
+  const { text, speaking, silent } = useCaption()
+  const { narrationMuted } = useSettings()
+  const showHint = silent && !narrationMuted
   return (
     <button
       type="button"
       onClick={replay}
       aria-label="השמע שוב"
-      className="flex min-h-14 w-full items-center gap-3 rounded-2xl border border-white/10 bg-black/55 px-4 py-2.5 text-right backdrop-blur transition active:scale-[0.98]"
+      className={`flex min-h-14 w-full flex-col rounded-2xl border bg-black/55 px-4 py-2.5 text-right backdrop-blur transition active:scale-[0.98] ${
+        showHint ? 'animate-glow border-beitar' : 'border-white/10'
+      }`}
     >
-      <span className={`text-2xl ${speaking ? 'animate-pulse' : 'opacity-70'}`}>🔊</span>
-      <span className="flex-1 text-lg leading-snug font-medium text-beitar" aria-live="polite">
-        {text}
+      <span className="flex w-full items-center gap-3">
+        <span className={`text-2xl ${speaking ? 'animate-pulse' : 'opacity-70'}`}>🔊</span>
+        <span className="flex-1 text-lg leading-snug font-medium text-beitar" aria-live="polite">
+          {text}
+        </span>
       </span>
+      {showHint && <span className="mt-1 text-sm text-white/80">לא שומעים? הגבירו את הקול, כבו את מצב השקט באייפון — ולחצו כאן.</span>}
     </button>
   )
 }

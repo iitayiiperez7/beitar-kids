@@ -6,15 +6,29 @@
 //  - IFA match sheets 17/08–19/10/2026 for shirt numbers (the IFA squad list has no numbers)
 // Positions follow the club's own groups (שוערים / הגנה / קישור / התקפה).
 //
-// No photos ship with the app: the club's terms of use forbid reusing site
-// content without written permission. Parents add verified photos in the
-// parent screen; until then the game shows a jersey with the player's number.
+// Photos: only openly licensed Wikimedia Commons photos ship with the app (each
+// checked by eye: the right player, in a Beitar kit; credited in the app). The
+// club's own photos are not included — its terms of use forbid reuse without
+// written permission. Parents add more photos on their device (parent screen);
+// without one, the game shows a jersey with the player's number.
 
 import type { Player, Position } from './types'
 
 const VERIFIED_AT = '2026-10-21'
 const CLUB = 'https://www.beitarfc.co.il/player/'
 const BOTH_SOURCES = 'אתר המועדון + טפסי משחק של ההתאחדות'
+
+/** An openly licensed photo (shown with credit). */
+interface LicensedPhoto {
+  url: string
+  page: string
+  author: string
+  license: string
+  date?: string
+  /** CSS object-position keeping the face in frame. */
+  focus?: string
+  zoom?: number
+}
 
 interface Seed {
   id: string
@@ -32,6 +46,7 @@ interface Seed {
   verified?: boolean
   note?: string
   active?: boolean
+  photos?: LicensedPhoto[]
 }
 
 function make(s: Seed): Player {
@@ -47,7 +62,17 @@ function make(s: Seed): Player {
     jerseyNumber: s.number,
     position: s.position,
     images: [],
-    imageSources: [],
+    imageSources: (s.photos ?? []).map((ph) => ({
+      url: ph.url,
+      source: `Wikimedia Commons · ${ph.author}`,
+      date: ph.date,
+      license: ph.license,
+      pageUrl: ph.page,
+      verified: true,
+      addedAt: VERIFIED_AT,
+      objectPosition: ph.focus,
+      zoom: ph.zoom,
+    })),
     imageVerified: false,
     active: s.active ?? true,
     learningPriority: s.priority,
@@ -61,17 +86,41 @@ function make(s: Seed): Player {
 
 export const SQUAD_SEASON = '2026/27'
 
+// Openly licensed photos from Wikimedia Commons, checked 2026-10-21.
+const PHOTOS: Record<string, LicensedPhoto[]> = {
+  'yarden-shua': [
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/%D7%99%D7%A8%D7%93%D7%9F_%D7%A9%D7%95%D7%A2%D7%94_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%AA%22%D7%90.jpg/960px-%D7%99%D7%A8%D7%93%D7%9F_%D7%A9%D7%95%D7%A2%D7%94_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%AA%22%D7%90.jpg', page: 'https://commons.wikimedia.org/wiki/File:%D7%99%D7%A8%D7%93%D7%9F_%D7%A9%D7%95%D7%A2%D7%94_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%AA%22%D7%90.jpg', author: 'Noam Uzan (נועם אוזן)', license: 'CC BY 4.0', date: '2026-01-01', focus: '52% 28%' },
+  ],
+  'miguel-silva': [
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/%D7%9E%D7%99%D7%92%D7%9C_%D7%A1%D7%99%D7%9C%D7%91%D7%99_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%22%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%9E%D7%9B%D7%91%D7%99_%D7%AA%22%D7%90.jpg/960px-%D7%9E%D7%99%D7%92%D7%9C_%D7%A1%D7%99%D7%9C%D7%91%D7%99_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%22%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%9E%D7%9B%D7%91%D7%99_%D7%AA%22%D7%90.jpg', page: 'https://commons.wikimedia.org/wiki/File:%D7%9E%D7%99%D7%92%D7%9C_%D7%A1%D7%99%D7%9C%D7%91%D7%99_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%22%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%9E%D7%9B%D7%91%D7%99_%D7%AA%22%D7%90.jpg', author: 'Noam Uzan (נועם אוזן)', license: 'CC BY-SA 4.0', date: '2026-02-16', focus: '53% 25%', zoom: 1.5 },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Miguel_Macedo_Silva.jpg/960px-Miguel_Macedo_Silva.jpg', page: 'https://commons.wikimedia.org/wiki/File:Miguel_Macedo_Silva.jpg', author: 'Noam Uzan (נועם אוזן)', license: 'CC BY 4.0', date: '2024-11-18', focus: '38% 15%', zoom: 1.8 },
+  ],
+  'omer-atzili': [
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Beitar_Jerusalem_FC_vs._MTK_Budapest_FC_2016-06-18_%28018%29.jpg/960px-Beitar_Jerusalem_FC_vs._MTK_Budapest_FC_2016-06-18_%28018%29.jpg', page: 'https://commons.wikimedia.org/wiki/File:Beitar_Jerusalem_FC_vs._MTK_Budapest_FC_2016-06-18_(018).jpg', author: 'Steindy', license: 'CC BY-SA 3.0', date: '2016-06-18', focus: '50% 28%' },
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/%D7%A2%D7%95%D7%9E%D7%A8_%D7%90%D7%A6%D7%99%D7%9C%D7%99_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%91%22%D7%A9.jpg/960px-%D7%A2%D7%95%D7%9E%D7%A8_%D7%90%D7%A6%D7%99%D7%9C%D7%99_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%91%22%D7%A9.jpg', page: 'https://commons.wikimedia.org/wiki/File:%D7%A2%D7%95%D7%9E%D7%A8_%D7%90%D7%A6%D7%99%D7%9C%D7%99_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%91%22%D7%A9.jpg', author: 'Noam Uzan (נועם אוזן)', license: 'CC BY-SA 4.0', date: '2025-11-03', focus: '55% 18%', zoom: 2.4 },
+  ],
+  'adi-yona': [
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/%D7%A2%D7%93%D7%99_%D7%99%D7%95%D7%A0%D7%94_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%91%22%D7%A9_2026.jpg/960px-%D7%A2%D7%93%D7%99_%D7%99%D7%95%D7%A0%D7%94_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%91%22%D7%A9_2026.jpg', page: 'https://commons.wikimedia.org/wiki/File:%D7%A2%D7%93%D7%99_%D7%99%D7%95%D7%A0%D7%94_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%94%D7%A4%D7%95%D7%A2%D7%9C_%D7%91%22%D7%A9_2026.jpg', author: 'Noam Uzan (נועם אוזן)', license: 'CC BY 4.0', date: '2026-02-09', focus: '47% 24%', zoom: 2.4 },
+  ],
+  'gil-cohen': [
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/%D7%92%D7%99%D7%9C_%D7%9B%D7%94%D7%9F_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D.jpg/960px-%D7%92%D7%99%D7%9C_%D7%9B%D7%94%D7%9F_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D.jpg', page: 'https://commons.wikimedia.org/wiki/File:%D7%92%D7%99%D7%9C_%D7%9B%D7%94%D7%9F_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D.jpg', author: 'Noam Uzan (נועם אוזן)', license: 'CC BY 4.0', date: '2024-11-18', focus: '63% 15%' },
+  ],
+  'yarden-cohen': [
+    { url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/%D7%99%D7%A8%D7%93%D7%9F_%D7%9B%D7%94%D7%9F_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%22%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%9E%D7%9B%D7%91%D7%99_%D7%A0%D7%AA%D7%A0%D7%99%D7%94_2026.png/960px-%D7%99%D7%A8%D7%93%D7%9F_%D7%9B%D7%94%D7%9F_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%22%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%9E%D7%9B%D7%91%D7%99_%D7%A0%D7%AA%D7%A0%D7%99%D7%94_2026.png', page: 'https://commons.wikimedia.org/wiki/File:%D7%99%D7%A8%D7%93%D7%9F_%D7%9B%D7%94%D7%9F_%D7%91%D7%9E%D7%93%D7%99_%D7%91%D7%99%D7%AA%22%D7%A8_%D7%99%D7%A8%D7%95%D7%A9%D7%9C%D7%99%D7%9D_%D7%9C%D7%A4%D7%A0%D7%99_%D7%94%D7%9E%D7%A9%D7%97%D7%A7_%D7%A0%D7%92%D7%93_%D7%9E%D7%9B%D7%91%D7%99_%D7%A0%D7%AA%D7%A0%D7%99%D7%94_2026.png', author: 'Noam Uzan (נועם אוזן)', license: 'CC BY 4.0', date: '2026-02-23', focus: '49% 28%', zoom: 3.2 },
+  ],
+}
+
 const SEEDS: Seed[] = [
   // Stage 1 — five players to start with
   { id: 'yarden-shua', first: 'ירדן', last: 'שועה', number: 7, position: 'forward', priority: 1, page: 'yarden_shua', say: { last: 'שׁוּעָה' }, note: `${BOTH_SOURCES}. קפטן הקבוצה` },
   { id: 'miguel-silva', first: 'מיגל', last: 'סילבה', number: 55, position: 'goalkeeper', priority: 2, page: 'miguel_silva', say: { first: 'מִיגֶל' }, firstAliases: ['מיגאל'], lastAliases: ['סילווה', 'סילוה'] },
   { id: 'shon-weissman', first: 'שון', last: 'וייסמן', number: 19, position: 'forward', priority: 3, page: 'שון-וייסמן', firstAliases: ['שאון'], lastAliases: ['ויסמן', 'וויסמן', 'וייצמן'] },
   { id: 'omer-atzili', first: 'עומר', last: 'אצילי', number: 77, position: 'forward', priority: 4, page: 'omer_atzili', say: { last: 'אַצִילִי' } },
-  { id: 'eugene-ansah', first: "יוג'ין", last: 'אנסה', number: 13, position: 'forward', priority: 5, page: 'יוגין-אנסה', say: { first: "יוּגִ'ין", last: 'אַנְסָה' }, firstAliases: ['יוגן'], lastAliases: ['אנסא', 'אנסאה'] },
+  { id: 'eugene-ansah', first: "יוג'ין", last: 'אנסה', number: 13, position: 'forward', priority: 6, page: 'יוגין-אנסה', say: { first: "יוּגִ'ין", last: 'אַנְסָה' }, firstAliases: ['יוגן'], lastAliases: ['אנסא', 'אנסאה'] },
 
   // Stage 2
-  { id: 'johnbosco-kalu', first: "ג'ונבוסקו", last: 'קאלו', number: 9, position: 'forward', priority: 6, page: 'גונבוסקו-קאלו', say: { first: "ג'וֹנְבּוֹסְקוֹ", last: 'קָאלוּ' }, aliases: ['סמואל קאלו'], firstAliases: ['סמואל', "ג'ון בוסקו", 'בוסקו'], lastAliases: ['קלו'], note: `${BOTH_SOURCES}. "סמואל קאלו" הוא אותו שחקן` },
-  { id: 'adi-yona', first: 'עדי', last: 'יונה', number: 10, position: 'midfielder', priority: 7, page: 'adi_yona' },
+  { id: 'johnbosco-kalu', first: "ג'ונבוסקו", last: 'קאלו', number: 9, position: 'forward', priority: 7, page: 'גונבוסקו-קאלו', say: { first: "ג'וֹנְבּוֹסְקוֹ", last: 'קָאלוּ' }, aliases: ['סמואל קאלו'], firstAliases: ['סמואל', "ג'ון בוסקו", 'בוסקו'], lastAliases: ['קלו'], note: `${BOTH_SOURCES}. "סמואל קאלו" הוא אותו שחקן` },
+  { id: 'adi-yona', first: 'עדי', last: 'יונה', number: 10, position: 'midfielder', priority: 5, page: 'adi_yona' },
   { id: 'timothy-muzie', first: 'טימוטי', last: 'מוזי', number: 11, position: 'midfielder', priority: 8, page: 'timothy_muzie', say: { last: 'מוּזִי' }, firstAliases: ['טימותי', 'טים'], lastAliases: ['מוזה', 'מוזיה'] },
   { id: 'daniel-worko', first: 'דניאל', last: 'וורקו', number: 26, position: 'midfielder', priority: 9, page: 'דניאל-וורקו', say: { last: 'וֶורְקוֹ' }, firstAliases: ['דני', "דג'אץ"], lastAliases: ['ורקו'], note: `${BOTH_SOURCES}. בהתאחדות רשום "דג'אץ וורקו"` },
   { id: 'luka-gadrani', first: 'לוקה', last: 'גדראני', number: 44, position: 'defender', priority: 10, page: 'לוקה-גדראני', say: { last: 'גַּדְרָאנִי' }, lastAliases: ['גדרני'] },
@@ -102,4 +151,4 @@ const SEEDS: Seed[] = [
   { id: 'itay-shoshan', first: 'איתיי', last: 'שושן', number: null, position: 'unknown', priority: 91, active: false, verified: false, note: 'רשום בהתאחדות בלבד; מספר ותפקיד לא אומתו' },
 ]
 
-export const SEED_PLAYERS: Player[] = SEEDS.map(make)
+export const SEED_PLAYERS: Player[] = SEEDS.map((s) => make({ ...s, photos: PHOTOS[s.id] }))

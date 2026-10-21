@@ -17,7 +17,8 @@ export interface SpeakOptions {
 export interface TTSProvider {
   isSupported(): boolean
   hebrewVoices(): SpeechSynthesisVoice[]
-  speak(text: string, opts: SpeakOptions): Promise<void>
+  /** Resolves when done; `false` means the engine never actually started talking. */
+  speak(text: string, opts: SpeakOptions): Promise<boolean>
   cancel(): void
 }
 

@@ -5,28 +5,30 @@ import { del, get, set } from 'idb-keyval'
 import { useEffect, useState } from 'react'
 
 const PREFIX = 'idb:'
-const MAX_SIDE = 1024
+const MAX_SIDE = 900
 const urlCache = new Map<string, string>()
 
-async function downscale(file: File): Promise<Blob> {
+async function downscale(image: Blob): Promise<Blob> {
   try {
-    const bitmap = await createImageBitmap(file)
+    const bitmap = await createImageBitmap(image)
     const scale = Math.min(1, MAX_SIDE / Math.max(bitmap.width, bitmap.height))
     const canvas = document.createElement('canvas')
     canvas.width = Math.round(bitmap.width * scale)
     canvas.height = Math.round(bitmap.height * scale)
     canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
     bitmap.close()
-    return await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b ?? file), 'image/jpeg', 0.86))
+    // PNG keeps cut-out player photos transparent; everything else becomes a compact JPEG.
+    const type = image.type === 'image/png' ? 'image/png' : 'image/jpeg'
+    return await new Promise<Blob>((resolve) => canvas.toBlob((b) => resolve(b ?? image), type, 0.86))
   } catch {
-    return file
+    return image
   }
 }
 
 /** Stores the photo locally and returns the "idb:" reference to save on the player. */
-export async function saveLocalImage(file: File): Promise<string> {
+export async function saveLocalImage(image: Blob): Promise<string> {
   const key = `photo-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
-  await set(key, await downscale(file))
+  await set(key, await downscale(image))
   return PREFIX + key
 }
 

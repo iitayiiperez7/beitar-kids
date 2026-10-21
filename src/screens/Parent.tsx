@@ -15,12 +15,16 @@ import { addPlayer, isSeedPlayer, removePlayer, resetRosterEdits, updatePlayer, 
 import { updateSettings, useSettings } from '../store/settings'
 import { installApp, useCanInstall } from '../pwa'
 import { JerseyArt } from '../ui/PlayerPhoto'
+import { PhotoWizard } from './PhotoWizard'
 
 const GATE_KEY = 'beitar.parent.unlocked'
 
 export function Parent({ onExit }: { onExit: () => void }) {
   const [unlocked, setUnlocked] = useState(() => sessionStorage.getItem(GATE_KEY) === '1')
-  const [tab, setTab] = useState<'players' | 'progress' | 'settings'>('players')
+  const roster = useRoster()
+  const [tab, setTab] = useState<'photos' | 'players' | 'progress' | 'settings'>(() =>
+    roster.some((p) => p.active && !p.imageVerified) ? 'photos' : 'players',
+  )
 
   if (!unlocked) {
     return (
@@ -46,7 +50,8 @@ export function Parent({ onExit }: { onExit: () => void }) {
         <nav className="mb-4 flex gap-2">
           {(
             [
-              ['players', 'שחקנים ותמונות'],
+              ['photos', '📷 תמונות'],
+              ['players', 'שחקנים'],
               ['progress', 'התקדמות'],
               ['settings', 'הגדרות'],
             ] as const
@@ -55,12 +60,13 @@ export function Parent({ onExit }: { onExit: () => void }) {
               key={id}
               type="button"
               onClick={() => setTab(id)}
-              className={`flex-1 rounded-xl px-3 py-2.5 font-bold ${tab === id ? 'bg-beitar text-ink' : 'bg-white/10'}`}
+              className={`flex-1 rounded-xl px-2 py-2.5 text-sm font-bold sm:text-base ${tab === id ? 'bg-beitar text-ink' : 'bg-white/10'}`}
             >
               {label}
             </button>
           ))}
         </nav>
+        {tab === 'photos' && <PhotoWizard />}
         {tab === 'players' && <PlayersTab />}
         {tab === 'progress' && <ProgressTab />}
         {tab === 'settings' && <SettingsTab />}
@@ -599,6 +605,26 @@ function ProgressTab() {
 
 // ---------------------------------------------------------------- settings
 
+function PhotoCredits() {
+  const credited = useRoster().flatMap((p) => p.imageSources.filter((src) => src.pageUrl).map((src) => ({ p, src })))
+  if (!credited.length) return null
+  return (
+    <Card title="קרדיט לתמונות">
+      <ul className="space-y-1 text-xs text-white/70" dir="ltr">
+        {credited.map(({ p, src }) => (
+          <li key={src.url}>
+            <a href={src.pageUrl} target="_blank" rel="noreferrer" className="underline">
+              {p.fullName}
+            </a>{' '}
+            — {src.source}, {src.license}
+            {src.date ? `, ${src.date}` : ''}
+          </li>
+        ))}
+      </ul>
+    </Card>
+  )
+}
+
 function SettingsTab() {
   const s = useSettings()
   const canInstall = useCanInstall()
@@ -634,7 +660,7 @@ function SettingsTab() {
             </button>
           ))}
         </div>
-        <p className="mt-2 text-xs text-white/50">בוחרים שחקנים לתרגול בלשונית "שחקנים ותמונות" (תיבת "לתרגול").</p>
+        <p className="mt-2 text-xs text-white/50">בוחרים שחקנים לתרגול בלשונית "שחקנים" (תיבת "לתרגול").</p>
         <Field label="שאלות בכל סבב">
           <div className="flex gap-2">
             {[5, 8, 10, 12].map((n) => (
@@ -739,6 +765,8 @@ function SettingsTab() {
           </p>
         )}
       </Card>
+
+      <PhotoCredits />
 
       <Card title="איפוס">
         <button

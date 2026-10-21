@@ -25,10 +25,16 @@ export interface ImageSource {
   source: string
   /** When the photo was taken or published (ISO date), if known. */
   date?: string
-  /** Permission note, e.g. "לשימוש פרטי בבית". */
+  /** Permission note or license name, e.g. "CC BY-SA 4.0". */
   license?: string
+  /** Page to credit (e.g. the Wikimedia Commons file page). */
+  pageUrl?: string
   /** A parent confirmed this is the right player, in a Beitar kit. Only verified photos reach the game. */
   verified: boolean
+  /** CSS object-position that keeps the face in a portrait crop, e.g. "50% 20%". */
+  objectPosition?: string
+  /** Extra zoom toward objectPosition, for photos where the face is small. */
+  zoom?: number
   addedAt: string
 }
 

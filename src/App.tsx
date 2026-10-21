@@ -39,6 +39,7 @@ function Splash({ onStart }: { onStart: () => void }) {
       >
         ▶ יאללה מתחילים!
       </button>
+      <p className="text-sm text-white/60">🔊 הגבירו את הקול · באייפון: כבו את מצב השקט</p>
     </div>
   )
 }
